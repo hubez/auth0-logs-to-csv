@@ -65,9 +65,12 @@ const getLogs = function (checkPoint) {
             });
 
             logger.info('Processed ' + logs.length + ' logs.');
-            setImmediate(function () {
-                getLogs(logs[logs.length - 1]._id);
-            });
+            setTimeout(
+                function () {
+                    getLogs(logs[logs.length - 1]._id);
+                },
+                5000 // wait 5 seconds between requests to ensure we aren't rate-limited
+            );
         }
         else {
             done();
