@@ -29,32 +29,38 @@ const auth0 = new Auth0({
 });
 
 const logs = [];
+
 const done = function () {
     logger.info('All logs have been downloaded, total: ' + logs.length);
 
-    var log_type = getLogTypes();
-    var data = logs.map(function (record) {
-        if (log_type[record.type]) {
-            record.type = log_type[record.type].event;
-        }
+    var data = logs
+        .filter(function (record) {
+            // we're only interested in successful logins.
+            // see https://auth0.com/docs/api/management/v2#!/Logs/get_logs for event acronym mappings
+            return record.type === 's';
+        })
+        .map(function (record) {
+            return {
+                'date'       : record.date,
+                'connection' : record.connection,
+                'user_name'  : record.user_name,
+                'user_id'    : record.user_id,
+                'login_count': record.details.stats.loginsCount,
+                'ip'         : record.ip,
+                'user_agent' : record.user_agent,
+                'client_name': record.client_name,
+                'client_id'  : record.client_id
+            }
+        });
 
-        if (record.description) {
-            record.description = record.description.replace(/(\s+|\;)/g, ' ');
-        }
-
-        if (record.details) {
-            record.details = JSON.stringify(record.details).replace(/(\s+|\;)/g, ' ');
-        }
-
-        return record;
-    });
-
-    var output = new CSV(data, {header: true, cellDelimiter: '\t'}).encode();
+    logger.info('Exporting ' + data.length + ' successful login records');
+    var output = new CSV(data, {header: true, cellDelimiter: ','}).encode();
     fs.writeFileSync('./auth0-logs.csv', output);
 };
 
 const getLogs = function (checkPoint) {
     auth0.getLogs({take: 200, from: checkPoint}, function (err, result) {
+
         if (err) {
             return logger.error('Error getting logs', err);
         }
@@ -91,126 +97,3 @@ auth0.getAccessToken(function (err, newToken) {
     logger.debug('Authentication success.');
     getLogs();
 });
-
-const getLogTypes = function () {
-    return {
-        's'     : {
-            event: 'Success Login'
-        },
-        'seacft': {
-            event: 'Success Exchange'
-        },
-        'feacft': {
-            event: 'Failed Exchange'
-        },
-        'f'     : {
-            event: 'Failed Login'
-        },
-        'w'     : {
-            event: 'Warnings During Login'
-        },
-        'du'    : {
-            event: 'Deleted User'
-        },
-        'fu'    : {
-            event: 'Failed Login (invalid email/username)'
-        },
-        'fp'    : {
-            event: 'Failed Login (wrong password)'
-        },
-        'fc'    : {
-            event: 'Failed by Connector'
-        },
-        'fco'   : {
-            event: 'Failed by CORS'
-        },
-        'con'   : {
-            event: 'Connector Online',
-        },
-        'coff'  : {
-            event: 'Connector Offline'
-        },
-        'fcpro' : {
-            event: 'Failed Connector Provisioning'
-        },
-        'ss'    : {
-            event: 'Success Signup'
-        },
-        'fs'    : {
-            event: 'Failed Signup'
-        },
-
-        'cs'       : {
-            event: 'Code Sent'
-        },
-        'cls'      : {
-            event: 'Code/Link Sent'
-        },
-        'sv'       : {
-            event: 'Success Verification Email'
-        },
-        'fv'       : {
-            event: 'Failed Verification Email'
-        },
-        'scp'      : {
-            event: 'Success Change Password'
-        },
-        'fcp'      : {
-            event: 'Failed Change Password'
-        },
-        'sce'      : {
-            event: 'Success Change Email'
-        },
-        'fce'      : {
-            event: 'Failed Change Email'
-        },
-        'scu'      : {
-            event: 'Success Change Username'
-        },
-        'fcu'      : {
-            event: 'Failed Change Username'
-        },
-        'scpn'     : {
-            event: 'Success Change Phone Number'
-        },
-        'fcpn'     : {
-            event: 'Failed Change Phone Number'
-        },
-        'svr'      : {
-            event: 'Success Verification Email Request'
-        },
-        'fvr'      : {
-            event: 'Failed Verification Email Request'
-        },
-        'scpr'     : {
-            event: 'Success Change Password Request'
-        },
-        'fcpr'     : {
-            event: 'Failed Change Password Request'
-        },
-        'fn'       : {
-            event: 'Failed Sending Notification'
-        },
-        'sapi'     : {
-            event: 'API Operation'
-        },
-        'fapi'     : {
-            event: 'Failed API Operation'
-        },
-        'limit_wc' : {
-            event: 'Blocked Account'
-        },
-        'limit_ui' : {
-            event: 'Too Many Calls to /userinfo'
-        },
-        'api_limit': {
-            event: 'Rate Limit On API'
-        },
-        'sdu'      : {
-            event: 'Successful User Deletion'
-        },
-        'fdu'      : {
-            event: 'Failed User Deletion'
-        }
-    };
-};
