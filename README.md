@@ -10,13 +10,13 @@ Small tool to export your Auth0 Logs to a CSV file.
  2. Go to **Apps/APIs**
  3. Get the `domain`, `client_id` and `client_secret` for one of your apps
  4. Save this information in a file called `config.json` in the following format:
- ```json
- {
-   "AUTH0_DOMAIN": "{YOUR_DOMAIN}",
-   "AUTH0_CLIENT_ID": "{CLIENT_ID}",
-   "AUTH0_CLIENT_SECRET": "{CLIENT_SECRET}"
- }
- ```
+```json
+{
+ "AUTH0_DOMAIN": "{YOUR_DOMAIN}",
+ "AUTH0_CLIENT_ID": "{CLIENT_ID}",
+ "AUTH0_CLIENT_SECRET": "{CLIENT_SECRET}"
+}
+```
 
 ## Exporting your logs
 
